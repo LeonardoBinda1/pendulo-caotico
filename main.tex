@@ -1,0 +1,633 @@
+% AJP-oriented rewrite of the driven damped pendulum manuscript.
+% For initial AJP submission, author names, affiliations, and acknowledgments
+% should be omitted for anonymous review. Add them after conditional acceptance.
+%
+% The current AJP sample manuscript uses REVTeX in PRB preprint mode.
+% For a compact two-column preview, replace "preprint" by "reprint" below.
+
+\documentclass[aps,prb,reprint,floatfix]{revtex4-2}
+
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{lmodern}
+\usepackage{capt-of}
+
+\DeclareMathOperator{\sech}{sech}
+\newcommand{\vect}[1]{\bm{#1}}
+
+\begin{document}
+
+\title{From Regular Motion to Fractal Geometry: Chaos in the Driven Damped Pendulum}
+
+
+
+\author{autores}
+\affiliation{Department of Physics, Federal University of Esp\'irito Santo,
+29075-910 Vit\'oria, ES, Brazil}
+\author{autores}
+\affiliation{Center for Astrophysics and Cosmology, Federal University of
+Esp\'irito Santo, 29075-910 Vit\'oria, ES, Brazil}
+% Replace the two author placeholders and add verified emails before submission.
+
+\begin{abstract}
+The driven damped pendulum connects an explicit mechanical model with the geometry and quantitative diagnostics of deterministic chaos. Starting from the conservative separatrix, we derive the Melnikov integral and explain the conditions under which its simple zeros predict transverse homoclinic intersections. We distinguish this perturbative result from the existence of an attracting chaotic orbit at finite damping. Stroboscopic Poincar\'e sections, a bifurcation diagram, and tangent-vector Lyapunov estimates then characterize the long-time dynamics. Numerical reconstruction and refinement independently test two transverse manifold crossings. Finally, capacity and information dimensions from finite samples are compared with the Kaplan--Yorke construction, with explicit tests of sample size, grid origin, spatial resolution, and integration step. The derivations and accompanying numerical protocol identify all variables, sampling conventions, and approximation limits, making the calculation reproducible while connecting mechanics, perturbation theory, and fractal geometry at the advanced undergraduate level.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+The simple pendulum offers a direct route from familiar mechanics to nonlinear dynamics. Its small-angle approximation is a harmonic oscillator, but the full restoring torque admits both oscillations and rotations, separated by a special limiting orbit. Adding viscous damping and a periodic torque preserves the simplicity of the mechanical setup while allowing periodic responses, bifurcations, and chaotic attractors. The model is consequently well suited to connecting the equations of motion with the geometrical and statistical tools used to diagnose chaos.\cite{DeJong1992,BakerGollub1996,Strogatz2015}
+
+This connection has a long historical background. Galileo's investigations of pendular motion and its approximate isochronism helped motivate its use in timekeeping. Seventeenth-century discussions of amplitude dependence, including those involving Mersenne and Descartes, made the limitations of circular-pendulum isochronism increasingly explicit. Huygens gave the subject a systematic geometrical treatment in the \textit{Horologium Oscillatorium} (1673), distinguishing the circular pendulum from the exactly isochronous cycloidal construction.\cite{Buyse2017,Huygens1673,Matthews2000} The subsequent development of forced-oscillation theory introduced another essential ingredient: Euler analyzed harmonic excitation and resonance, and Thomas Young later incorporated resistance into his treatment of forced motion and tides.\cite{Bistafa2021,Bistafa2022,Young1813,Young1824,Bleck2018} These contributions supplied the physical ingredients of the modern driven damped oscillator, although its nonlinear behavior required a different conceptual framework.
+
+That framework emerged from the qualitative study of differential equations. Poincar\'e's work on the three-body problem revealed how invariant trajectories can organize intricate motion even when the governing equations are deterministic.\cite{Poincare1890,BarrowGreen1997} Studies of forced nonlinear oscillations by van der Pol, Cartwright, and Littlewood, followed by Lorenz's demonstration of sensitive dependence, extended this perspective to dissipative systems.\cite{VanderPol1927,CartwrightLittlewood1945,Lorenz1963} Peixoto's work on structural stability and Smale's geometric theory further clarified the roles of hyperbolicity and invariant manifolds.\cite{Peixoto1959,Peixoto1962,Smale1960,Smale1967} Applied to the pendulum, these ideas shift attention from the appearance of a single time series to the structures that organize whole families of trajectories.
+
+This geometrical viewpoint also explains why dissipation and instability can coexist. Damping contracts phase-space volume, but it does not require every infinitesimal perturbation to contract: one direction can expand while another contracts more strongly. Repeated stretching and folding can then produce thin, recurrently folded sets in a bounded region. A stroboscopic section removes the continuous progression of the forcing phase and exposes this structure at a fixed phase of each drive cycle. A complicated projected curve alone, however, does not establish either sensitive dependence or a noninteger dimension; these are separate properties that require separate diagnostics.
+
+The resulting pedagogical question is how to connect a calculable geometrical mechanism with observable long-time chaos. Melnikov theory provides one part of the answer: weak forcing and damping can separate the stable and unstable manifolds of the conservative saddle, and simple zeros of a first-order integral predict transverse intersections.\cite{Melnikov1963,Wiggins2003} Such intersections imply complicated invariant dynamics under the appropriate hypotheses, but they do not establish that a typical initial condition approaches a chaotic attractor. Poincar\'e sections and Lyapunov exponents therefore supply complementary evidence about the attracting motion, while box counting and the Kaplan--Yorke construction describe different aspects of its geometry.\cite{KaplanYorke1979,FarmerOttYorke1983,Ott2002}
+
+Fractal geometry makes the last distinction quantitative. A noninteger box-counting dimension describes how the number of occupied cells grows as their size decreases, rather than assigning a dimension from visual irregularity alone. The mathematical framework also distinguishes box-counting dimension from Hausdorff dimension; the latter is not calculated here.\cite{Falconer2014} For a dynamical attractor, geometrical support and long-time visitation probabilities are different objects. The hierarchy of generalized dimensions formalizes this distinction: capacity dimension counts occupied regions, whereas information dimension weights them by their invariant probabilities.\cite{HentschelProcaccia1983} Their values need not coincide when the orbit visits the attractor unevenly.
+
+This distinction becomes essential in a reproducible numerical study. Any finite collection of isolated points has zero asymptotic box-counting dimension, even when it samples an underlying fractal attractor. Numerical slopes must therefore be extracted between the coarse scales that describe only the overall envelope and the fine scales dominated by sparse sampling. Finite records, spatial resolution, and the chosen scaling interval are central limitations of dimension estimation.\cite{Theiler1990} We consequently report sensitivity to these choices and compare geometrical and measure-based estimates with the independent stretching rates, without treating their agreement as a proof of an exact limiting dimension.
+
+We develop this connection in a single model, keeping the analytical approximations separate from the numerical evidence. Section~\ref{sec:model} derives the conservative separatrix; Sec.~\ref{sec:melnikov} evaluates the Melnikov integral and its scope; Sec.~\ref{sec:poincare_lyapunov} defines the stroboscopic diagnostics and computational protocol; Sec.~\ref{sec:fractal} validates manifold crossings and examines finite-resolution dimension estimates; and Sec.~\ref{sec:discussion} discusses their joint interpretation. Appendix~\ref{app:transform} supplies the integral identity needed in the analytical calculation.
+
+\section{Mechanical model and conservative phase-space structure}
+\label{sec:model}
+
+\subsection{Driven damped pendulum}
+
+Let $g>0$ be the gravitational acceleration and let $\theta$ be measured from the downward vertical. Consider a point mass $m$ attached to a rigid, massless rod of length $\ell$. The pendulum is subject to gravity, a viscous torque with coefficient $b\geq0$, and a periodic external torque of amplitude $\tau_0$ and angular frequency $\omega_d$. Its instantaneous torques are $-b\,d\theta/dt_{\rm phys}$ and $\tau_0\cos(\omega_d t_{\rm phys})$. Its equation of motion is
+\begin{equation}
+ m\ell^2\frac{d^2\theta}{dt_{\rm phys}^2}
+ +b\frac{d\theta}{dt_{\rm phys}}
+ +mg\ell\sin\theta
+ =\tau_0\cos(\omega_d t_{\rm phys}).
+\label{eq:physical}
+\end{equation}
+Introducing the dimensionless time $t=\sqrt{g/\ell}\,t_{\rm phys}$ gives
+\begin{equation}
+ \ddot\theta+q\dot\theta+\sin\theta=f\cos(\Omega t),
+\label{eq:pendulum}
+\end{equation}
+where an overdot now denotes differentiation with respect to $t$, and
+\begin{equation}
+ q=\frac{b}{m\ell^2\sqrt{g/\ell}},\qquad
+ f=\frac{\tau_0}{mg\ell},\qquad
+ \Omega=\frac{\omega_d}{\sqrt{g/\ell}}.
+\label{eq:dimensionlessparameters}
+\end{equation}
+Writing $\omega=\dot\theta$, Eq.~(\ref{eq:pendulum}) becomes the first-order nonautonomous system
+\begin{align}
+ \dot\theta&=\omega,\label{eq:firstorder1}\\
+ \dot\omega&=-\sin\theta-q\omega+f\cos(\Omega t).\label{eq:firstorder2}
+\end{align}
+Here $q\geq0$ is the damping strength, $f\geq0$ the torque amplitude, and $\Omega>0$ the forcing frequency in units of the small-oscillation frequency $\sqrt{g/\ell}$. The variable $\omega$ is a dimensionless angular velocity, not the dimensional drive frequency $\omega_d$. For figures we use $\bar\theta=((\theta+\pi)\bmod 2\pi)-\pi\in[-\pi,\pi)$.
+The angular coordinate is integrated continuously. Reduction modulo $2\pi$ is performed only when a cylindrical phase portrait or a box-counting analysis is constructed, because wrapping $\theta$ during integration would introduce artificial discontinuities.
+
+\subsection{Conservative limit, saddle points, and separatrix}
+\label{subsec:separatrix}
+
+The geometry that later organizes the chaotic dynamics is already present in the conservative limit $q=f=0$, for which
+\begin{equation}
+ \ddot\theta+\sin\theta=0.
+\label{eq:conservative}
+\end{equation}
+Multiplying Eq.~(\ref{eq:conservative}) by $\dot\theta$ and integrating once gives the conserved dimensionless energy
+\begin{equation}
+ H(\theta,\omega)=\frac{\omega^2}{2}+1-\cos\theta=E.
+\label{eq:energy}
+\end{equation}
+The equilibrium points $(\theta,\omega)=(2k\pi,0)$ are centers, whereas $((2k+1)\pi,0)$ are hyperbolic saddles. The Jacobian at an equilibrium is $\left(\begin{smallmatrix}0&1\\-\cos\theta_*&0\end{smallmatrix}\right)$. Its eigenvalues are $\pm i$ at a downward equilibrium and $\pm1$ at an upward equilibrium. A center has nearby closed energy curves without asymptotic attraction; a hyperbolic saddle has one contracting and one expanding direction. The energy $H$ is the mechanical energy divided by $mg\ell$, with zero at the downward position. The saddle energy is $E_s=2$. Setting $E=2$ in Eq.~(\ref{eq:energy}) yields the separatrix relation
+\begin{equation}
+ \omega^2=2(1+\cos\theta)=4\cos^2\!\left(\frac{\theta}{2}\right).
+\label{eq:separatrix_relation}
+\end{equation}
+For the upper branch between $-\pi$ and $\pi$, we choose
+\begin{equation}
+ \dot\theta=2\cos\!\left(\frac{\theta}{2}\right).
+\label{eq:separatrix_ode}
+\end{equation}
+Separating variables and using $u=\theta/2$ gives
+\begin{equation}
+ \int \sec u\,du=t-t_c,
+\label{eq:separatrix_integral}
+\end{equation}
+so that $\ln|\sec u+\tan u|=t-t_c$. Choosing the origin of time so that $t_c=0$ leads to the familiar separatrix orbit
+\begin{align}
+ \theta_s(t)&=4\tan^{-1}(e^t)-\pi,\label{eq:theta_sep}\\
+ \omega_s(t)&=\dot\theta_s(t)=2\sech t.\label{eq:omega_sep}
+\end{align}
+In an unwrapped $(\theta,\omega)$ plane this trajectory is heteroclinic, connecting the equivalent saddles at $(-\pi,0)$ and $(\pi,0)$. On the cylinder, where angles differing by $2\pi$ are identified, it is the homoclinic separatrix of the saddle. This distinction is useful because the Melnikov analysis below is naturally interpreted on the cylindrical phase space. Figure~\ref{fig:phaseportrait} displays this energy organization: $0<E<2$ gives librations around a center and $E>2$ gives rotations. Unlike a damped phase portrait, these closed libration curves do not spiral toward their centers.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/phase_portrait.png}
+\caption{Conservative energy contours for $q=f=0$, with $H$ defined by Eq.~(\ref{eq:energy}). Red curves have $H=2$; gray curves have $H=0.1,0.4,0.8,1.2,1.6,2.5,3.2,4.2,5.5$. Blue circles and red squares mark centers and saddles, respectively. The horizontal coordinate is unwrapped.}
+\label{fig:phaseportrait}
+\end{figure}
+
+\section{Separatrix splitting and the Melnikov criterion}
+\label{sec:melnikov}
+
+For a saddle, the stable manifold $W^s$ consists of initial conditions that approach it forward in time; the unstable manifold $W^u$ consists of those that approach it backward in time. Under periodic perturbation, the equilibrium continues to a nearby hyperbolic periodic orbit, represented by a fixed point $p_\epsilon$ of the stroboscopic map. More precisely,
+\begin{align}
+W^s(p_\epsilon)&=\{x:\mathcal P^n(x)\to p_\epsilon\text{ as }n\to\infty\},\notag\\
+W^u(p_\epsilon)&=\{x:\mathcal P^{-n}(x)\to p_\epsilon\text{ as }n\to\infty\}.
+\end{align}
+At a transverse intersection the two curves have distinct tangent directions; at a tangency those directions coincide. A homoclinic orbit approaches the same saddle orbit in both time directions. The conservative separatrix is structurally delicate: weak nonconservative and time-dependent terms can split the stable and unstable manifolds that coincide when $q=f=0$. To make the perturbative character explicit, we write Eq.~(\ref{eq:pendulum}) as
+\begin{equation}
+ \ddot\theta+\sin\theta
+ =\epsilon\left[-\gamma\dot\theta+F\cos(\Omega t)\right],
+ \qquad 0<\epsilon\ll 1,
+\label{eq:perturbative}
+\end{equation}
+with $q=\epsilon\gamma$ and $f=\epsilon F$, where $\gamma$ and $F$ are fixed positive parameters of order unity as $\epsilon\to0$. The unperturbed system is Hamiltonian, with Hamiltonian given by Eq.~(\ref{eq:energy}). For a planar system of the form $\dot{\vect{x}}=\vect{F}_0(\vect{x})+\epsilon\vect{F}_1(\vect{x},t)$, the Melnikov function measures, to first order in $\epsilon$, an energy-based signed separation of the perturbed stable and unstable manifolds, up to the conventional nonzero geometric normalization. The leading contribution is $\epsilon M(t_0)+O(\epsilon^2)$; $M$ itself is not a physical length. Indeed, differentiation of Eq.~(\ref{eq:energy}) along a perturbed trajectory gives
+\begin{equation}
+\dot H=\epsilon\omega[-\gamma\omega+F\cos(\Omega t)].
+\label{eq:energy_balance}
+\end{equation}
+Evaluating this accumulated energy change along the reference separatrix gives the integral below. The phase offset $t_0$ specifies when the separatrix passage occurs relative to the periodic drive; it is defined modulo $T_D=2\pi/\Omega$.\cite{Melnikov1963,Wiggins2003}
+
+For the pendulum, $\vect{x}=(\theta,\omega)$, $\vect F_0=(\omega,-\sin\theta)$, and $\vect F_1=(0,-\gamma\omega+F\cos\Omega t)$. Thus the perturbation acts only in the $\omega$ equation. Using Eqs.~(\ref{eq:theta_sep}) and (\ref{eq:omega_sep}), the Melnikov function may therefore be written as
+\begin{equation}
+ M(t_0)=\int_{-\infty}^{\infty}
+ \omega_s(t)
+ \left[-\gamma\omega_s(t)+F\cos\!\left(\Omega(t+t_0)\right)\right]dt.
+\label{eq:melnikov_definition}
+\end{equation}
+It is useful to evaluate the two contributions separately. The dissipative term is
+\begin{align}
+ M_d&=-\gamma\int_{-\infty}^{\infty}\omega_s^2(t)\,dt\notag\\
+ &=-4\gamma\int_{-\infty}^{\infty}\sech^2 t\,dt=-8\gamma.
+\label{eq:melnikov_damping}
+\end{align}
+For the periodic forcing,
+\begin{equation}
+ M_f=2F\int_{-\infty}^{\infty}\sech t\,
+ \cos\!\left(\Omega(t+t_0)\right)dt.
+\label{eq:melnikov_force1}
+\end{equation}
+Expanding the cosine gives
+\begin{align}
+ M_f={}&2F\cos(\Omega t_0)
+ \int_{-\infty}^{\infty}\sech t\cos(\Omega t)dt\notag\\
+ &-2F\sin(\Omega t_0)
+ \int_{-\infty}^{\infty}\sech t\sin(\Omega t)dt.
+\label{eq:melnikov_force2}
+\end{align}
+The second integral vanishes because its integrand is odd. Using the Fourier transform derived in Appendix~\ref{app:transform}
+\begin{equation}
+ \int_{-\infty}^{\infty}\sech t\cos(\Omega t)dt
+ =\frac{\pi}{\cosh(\pi\Omega/2)},
+\label{eq:sechtransform}
+\end{equation}
+we obtain
+\begin{equation}
+ M(t_0)=-8\gamma+
+ \frac{2\pi F}{\cosh(\pi\Omega/2)}\cos(\Omega t_0).
+\label{eq:melnikov_final}
+\end{equation}
+A transverse intersection is predicted when $M(t_0)$ possesses a simple zero, that is, when $M(t_0^*)=0$ and $dM/dt_0|_{t_0^*}\neq0$. For $F,\gamma>0$, the zeros obey
+\begin{equation}
+\cos(\Omega t_0^*)=\frac{4\gamma}{\pi F}\cosh(\pi\Omega/2),
+\end{equation}
+and $M'(t_0)= -2\pi F\Omega\sin(\Omega t_0)/\cosh(\pi\Omega/2)$. Thus two simple zeros per forcing period occur when
+\begin{equation}
+ F>F_M\equiv\frac{4\gamma}{\pi}
+ \cosh\!\left(\frac{\pi\Omega}{2}\right).
+\label{eq:melnikov_threshold_scaled}
+\end{equation}
+Because $f/q=F/\gamma$, the same first-order condition can be expressed in terms of the parameters of Eq.~(\ref{eq:pendulum}) as
+\begin{equation}
+ f>f_M\equiv\frac{4q}{\pi}
+ \cosh\!\left(\frac{\pi\Omega}{2}\right).
+\label{eq:melnikov_threshold}
+\end{equation}
+
+Equation~(\ref{eq:melnikov_threshold}) has a clear mechanical interpretation. Damping contributes the constant negative term $-8\gamma$ to $M(t_0)$, tending to prevent the two manifolds from crossing. The periodic torque contributes an oscillatory term whose amplitude grows with $F$. Once the oscillatory contribution is large enough to overcome the dissipative offset, the first-order distance between the manifolds changes sign as the forcing phase $t_0$ varies, producing simple zeros and hence transverse intersections. At equality the zero is not simple, so first-order theory cannot determine the actual tangency threshold. Below the strict inequality, the integral supplies no simple zeros and hence no first-order evidence of this mechanism. Above it, and for sufficiently small $\epsilon$ with fixed $\gamma,F,\Omega$, the simple-zero theorem applies. A transverse homoclinic intersection yields a horseshoe for a suitable iterate of the map: repeated stretching and folding produce an invariant set with symbolic dynamics.\cite{Wiggins2003}
+
+The last statement must be distinguished from the existence of an attracting chaotic motion. Melnikov theory diagnoses a geometrical mechanism for chaotic invariant dynamics in the perturbative regime; it does not assert that a generic initial condition approaches a strange attractor, nor does Eq.~(\ref{eq:melnikov_threshold}) have to coincide with a numerical bifurcation threshold at finite $q$ and $f$. This distinction motivates the numerical diagnostics in Sec.~\ref{sec:poincare_lyapunov}.
+
+Figure~\ref{fig:melnikov} uses a weak-perturbation illustration with $q=0.05$, $\Omega=2/3$, and $f_M\simeq0.102$. It plots $\epsilon M$ directly in terms of $q$ and $f$, retaining the dissipative offset and phase dependence. The below-threshold, critical, and above-threshold curves distinguish an absent zero, a non-simple zero, and two simple zeros. This plot evaluates the analytical expression. The independently reconstructed manifolds and refined crossing locations are presented in Sec.~\ref{subsec:crossings} and Fig.~\ref{fig:fractal}(a,b).
+
+For the finite-parameter attractor calculations we use $q=0.5$ and $\Omega=2/3$. The same expression gives
+\begin{equation}
+ f_M=\frac{2}{\pi}\cosh(\pi/3)\simeq1.019.
+\label{eq:melnikov_numeric}
+\end{equation}
+Here $q$ is not asymptotically small, so this value is only a formal analytical reference. It is not a controlled prediction of an attractor transition.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/melnikov.png}
+\caption{First-order energy-splitting function $\epsilon M(t_0)=-8q+2\pi f\cos(\Omega t_0)/\cosh(\pi\Omega/2)$ at $q=0.05$ and $\Omega=2/3$. The three torque amplitudes are $f=0.8f_M,f_M,1.2f_M$, where $f_M\simeq0.102$. The horizontal line marks zero; no numerical manifold reconstruction is included.}
+\label{fig:melnikov}
+\end{figure}
+
+\section{Poincar\'e map, bifurcations, and Lyapunov instability}
+\label{sec:poincare_lyapunov}
+
+\subsection{Stroboscopic Poincar\'e map}
+
+The periodic forcing has period
+\begin{equation}
+ T_D=\frac{2\pi}{\Omega}.
+\label{eq:drive_period}
+\end{equation}
+We choose the phase $\phi_0=0$, so the drive is at its positive maximum at $t_n=nT_D$. Sampling every forcing period at this fixed phase converts the continuous nonautonomous system into the stroboscopic map
+\begin{equation}
+ \mathcal{P}:\vect{x}_n\mapsto\vect{x}_{n+1},\qquad
+ \vect{x}_n=\vect{x}(nT_D),
+\label{eq:poincare_map}
+\end{equation}
+where $\vect{x}=(\theta,\omega)$. A motion synchronized with the drive satisfies $\mathcal{P}(\vect{x}_*)=\vect{x}_*$ and appears as one point in the section. Angles are identified modulo $2\pi$: a rotating orbit can be a fixed point of the cylindrical map even if its unwrapped angle changes by an integer multiple of $2\pi$. A period-$kT_D$ orbit of least period $k$ satisfies $\mathcal{P}^k(\vect{x}_*)=\vect{x}_*$ and produces $k$ points. A quasiperiodic response, when present, can produce an invariant curve rather than a finite set of points, while a chaotic attractor produces a nonperiodic set with fine structure over multiple scales. The section therefore converts temporal behavior into geometry, but geometry alone does not prove sensitive dependence on initial conditions.
+
+A bifurcation diagram is obtained by repeating the same stroboscopic sampling while varying a control parameter, here the forcing amplitude $f$. After discarding a transient for each value of $f$, one plots a selected coordinate of the asymptotic points, for example
+\begin{equation}
+ \omega_n(f)=\omega(nT_D;f),
+\label{eq:bifurcation_sampling}
+\end{equation}
+against $f$. A single projected value is compatible with a period-one orbit; distinct branches are compatible with higher periods, and dense bands suggest aperiodic motion. Because projection can superpose different points, branch counting alone does not prove the full orbit period. A bifurcation is a qualitative change of an invariant solution or its stability as a control parameter varies; a period doubling creates an orbit with twice the previous period. Periodic windows can reappear inside chaotic parameter intervals.
+
+
+
+\subsection{Variational equation and largest Lyapunov exponent}
+
+To quantify the sensitivity of a trajectory to infinitesimal perturbations, consider two nearby solutions separated by $\delta\vect{x}$. Writing the right-hand side of Eqs.~(\ref{eq:firstorder1}) and (\ref{eq:firstorder2}) as $\dot{\vect{x}}=\vect{F}(\vect{x},t)$ and expanding to first order gives
+\begin{equation}
+ \vect{F}(\vect{x}+\delta\vect{x},t)
+ \simeq \vect{F}(\vect{x},t)
+ +D\vect{F}(\vect{x},t)\,\delta\vect{x}.
+\label{eq:linearization}
+\end{equation}
+Subtracting the equation for the reference trajectory therefore yields the variational equation
+\begin{equation}
+ \delta\dot{\vect{x}}=J(t)\delta\vect{x},
+\qquad
+ J(t)=
+ \begin{pmatrix}
+ 0&1\\
+ -\cos\theta(t)&-q
+ \end{pmatrix}.
+\label{eq:variational}
+\end{equation}
+The largest Lyapunov exponent is
+\begin{equation}
+ \lambda_{\max}=\lim_{t\rightarrow\infty}
+ \frac{1}{t}\ln\frac{\|\delta\vect{x}(t)\|}
+ {\|\delta\vect{x}(0)\|}.
+\label{eq:lyapunov_definition}
+\end{equation}
+Directly evolving a tangent vector for a long time is numerically inconvenient because its norm can overflow or underflow. Following the standard Benettin procedure,\cite{Benettin1980} the tangent vector is therefore renormalized at intervals $\Delta t_r$. At the beginning of each interval the tangent has unit norm. If $\vect w_k$ is the tangent at its end, set $r_k=\|\vect w_k\|$, accumulate $\ln r_k$, and replace it by $\vect w_k/r_k$. After $N$ intervals the estimate is
+\begin{equation}
+ \lambda_{\max}^{(N)}=
+ \frac{1}{N\Delta t_r}\sum_{k=1}^{N}\ln r_k,
+\label{eq:benettin}
+\end{equation}
+which converges to $\lambda_{\max}$ when the transient and averaging time are sufficiently long. A positive asymptotic value indicates exponential separation of nearby trajectories. The perturbation has the same driving phase as the reference trajectory, $\delta\phi=0$, and the norm is the Euclidean norm of $(\delta\theta,\delta\omega)$. For a generic tangent direction, this calculation gives the largest of the two transverse exponents per unit dimensionless time. A negative value is consistent with a stable periodic response; the autonomous extended flow additionally has a neutral exponent, discussed below. A finite-time value close to zero requires longer averaging before classification. The map exponents per iteration are $\Lambda_i=T_D\lambda_i$, while the dimensional exponents are $\lambda_{i,\mathrm{phys}}=\sqrt{g/\ell}\,\lambda_i$.
+
+Figure~\ref{fig:poincare} compares six attracting responses. Panels (a,b) show period-one and period-two orbits, while (c) displays the filamentary chaotic attractor at $q=0.5$, $f=1.2$. The lower-damping cases in (d--f) occupy progressively broader parts of the section, with sustained positive tangent-growth averages. Their greater visual density reflects the dynamics of different parameter pairs, rather than a superposition of transients or sampling phases. Because both $q$ and $f$ vary, this comparison is not a single bifurcation sequence or a claim of monotonic chaos onset. The fixed-$q$ scan in Fig.~\ref{fig:bifurcation_lyapunov} supplies the complementary one-parameter view.
+
+\onecolumngrid
+\begin{center}
+\centering
+\includegraphics[width=\textwidth]{figures/poincare.png}
+\captionof{figure}{Stroboscopic sections at $\Omega=2/3$ and phase zero, for $(q,f)=$ (a) $(0.5,0.9)$, (b) $(0.5,1.07)$, (c) $(0.5,1.2)$, (d) $(0.2,0.8)$, (e) $(0.1,1.2)$, and (f) $(0.05,0.6)$. Each panel uses $65536$ retained periods after $8000$ discarded periods, starting from $(\theta,\omega)=(0.2,0)$, with $480$ Runge--Kutta steps per period. Blue markers denote periodic responses; red points denote chaotic responses. The largest transverse Lyapunov exponent per unit dimensionless time is printed in each panel.}
+\label{fig:poincare}
+\end{center}
+\twocolumngrid
+
+\subsection{Numerical protocol and verification}
+\label{subsec:numerical}
+
+For Fig.~\ref{fig:poincare}, the state and tangent equations are integrated together by fourth-order Runge--Kutta with $h=T_D/480$. Sampling and tangent renormalization occur at each completed forcing period. The initial tangent is $(1,0)$ with unit norm; both state and tangent transients are discarded before logarithmic growth is accumulated. The initial state and sample lengths are given in the caption. Each parameter pair is independently restarted, so the figure represents the attractor reached from the prescribed state, rather than all possible coexisting attractors. The separate, much longer sample used for the dimension estimates is specified in Sec.~\ref{subsec:box_protocol}.
+
+For the bifurcation scan we retain $240$ steps per period; $401$ uniformly spaced amplitudes cover $0.9\leq f\leq1.5$, with spacing $0.0015$. Each amplitude is independently restarted from the same initial condition: this is not a continuation sweep. After $2000$ discarded periods, the Lyapunov average uses $1000$ periods and the upper panel displays the final $200$ angular velocities. Consequently, Fig.~\ref{fig:bifurcation_lyapunov} describes the attractor selected by one initial condition, rather than all coexisting attractors. Narrow windows, basin changes, and values near zero require additional resolution and averaging before a precise transition can be claimed.
+
+The formal Melnikov marker in Fig.~\ref{fig:bifurcation_lyapunov} is distinct from the observed periodic windows. In particular, irregular motion is not characterized by a single monotonic threshold in $f$. The joint plot identifies intervals where branch proliferation accompanies positive tangent growth, while also showing the reappearance of regular responses.
+
+For the three $q=0.5$ cases in Fig.~\ref{fig:poincare}(a--c), the transverse estimates are
+\begin{equation}
+\lambda_{\max}\simeq-0.2500,\quad-0.03993,\quad0.1321,
+\label{eq:measured_lambda}
+\end{equation}
+respectively. The lower-damping chaotic examples give $0.1190$, $0.1590$, and $0.1462$ for panels (d--f). In all four chaotic examples, each of eight successive blocks of $8192$ retained periods has a positive mean. Repeating the lower-damping runs with $960$ steps per period gives $0.1191$, $0.1606$, and $0.1457$. These comparisons support the numerical classification and approximate growth rates; they do not assign statistical confidence intervals or verify every point of the bifurcation scan. Chaotic trajectories are compared through their long-time statistics rather than pointwise coincidence.
+
+\onecolumngrid
+\begin{center}
+\centering
+\includegraphics[width=0.77\textwidth]{figures/bifurcation_lyapunov.png}
+\captionof{figure}{(a) Final $200$ stroboscopic velocities and (b) transverse Lyapunov averages over $1000$ periods, for $401$ independently restarted amplitudes at $q=0.5$, $\Omega=2/3$. The numerical protocol is specified in Sec.~\ref{subsec:numerical}. The dashed gold line is the formal first-order value $f_M\simeq1.019$; dotted gray lines identify $f=0.9$ and $1.2$.}
+\label{fig:bifurcation_lyapunov}
+\end{center}
+\twocolumngrid
+
+\section{Invariant-manifold crossings and fractal geometry}
+\label{sec:fractal}
+
+\subsection{Numerical verification of transverse crossings}
+\label{subsec:crossings}
+
+The Melnikov calculation can be complemented by a direct geometrical test. We use $q=0.05$, $f=0.12$, and $\Omega=2/3$, for which $f$ is above the first-order estimate $f_M\simeq0.102$. The nearby saddle orbit $\vect x_p(t)$ is obtained from the periodic boundary condition $\vect x_p(T_D)=\vect x_p(0)$, using a periodic boundary-value solve followed by Newton shooting. At phase zero its coordinates are approximately
+\begin{equation}
+\vect p=(3.058506,\,0.001280).
+\end{equation}
+The matrix $A=D\mathcal P(\vect p)$ is obtained by integrating the variational equation over one period. Its Floquet multipliers, the eigenvalues describing perturbation growth per period, are $\mu_u\simeq9.740\times10^3$ and $\mu_s\simeq6.409\times10^{-5}$. Thus the periodic orbit has one unstable and one stable direction, with corresponding unit eigenvectors $\vect e_u$ and $\vect e_s$.
+
+Images of small segments along these directions are traced forward for $W^u$ and backward for $W^s$. An adaptive subdivision limits both chord length and midpoint deviation in the unwrapped plane; the curves are split at angular seams only for display. Intersections of these polylines supply initial guesses, rather than final evidence. For each candidate we solve the matching equation
+\begin{align}
+&\mathcal P^n(\vect p+s_u\vect e_u)
+-\mathcal P^{-n}(\vect p+s_s\vect e_s)\notag\\
+&\hspace{1.2cm}=(2\pi k,0),\qquad s_u,s_s>0,
+\label{eq:crossing_matching}
+\end{align}
+where $k$ is an integer accounting for equivalent angular lifts. Here $s_u,s_s$ denote local seed amplitudes, not grid offsets. The tangents at the meeting point follow from the variational equations, so a crossing angle is not inferred from plotted chords.
+
+Long local legs require very small seed amplitudes. To avoid subtractive cancellation, we integrate the displacement $\vect\xi=(\xi_\theta,\xi_\omega)$ from the periodic reference, using
+\begin{align}
+\dot\xi_\theta&=\xi_\omega,\notag\\
+\dot\xi_\omega&=-2\cos(\theta_p+\xi_\theta/2)
+\sin(\xi_\theta/2)-q\xi_\omega.
+\label{eq:deviation_manifolds}
+\end{align}
+This is the exact difference equation for a given periodic reference, using a numerically stable trigonometric identity. With DOP853 integration, we compare legs of $n=2,3,4$ periods and relative tolerances $2\times10^{-12}$ and $2\times10^{-13}$. The two displayed intersections are
+\begin{align}
+C_1&\simeq(1.916398,\,1.032293),\notag\\
+C_2&\simeq(2.018494,\,0.910971).
+\label{eq:crossing_points}
+\end{align}
+For unit tangents $\vect t_u,\vect t_s$, define the acute coordinate-plane angle by $\alpha=\arccos|\vect t_u\cdot\vect t_s|$. The resulting values are $10.9025^\circ$ and $8.3003^\circ$. Across the displacement-based checks, matching residuals are below $2\times10^{-13}$ and location changes below $10^{-11}$. These internal convergence checks provide numerical evidence of transverse crossings; they are not interval-arithmetic proofs. Figure~\ref{fig:fractal}(a,b) displays the finite manifold portions and the selected crossing region. These weak-perturbation parameters must be distinguished from those of the attracting orbit studied next.
+
+\subsection{Capacity and information dimensions}
+\label{subsec:box_protocol}
+
+The stable period-one response gives a single point in the stroboscopic section and has box-counting dimension zero. A chaotic section can instead contain filaments with structure transverse to their visible envelope. Box counting measures the number of occupied cells as spatial resolution is refined; it concerns the support of the sampled set, without weighting cells by visitation frequency.\cite{Falconer2014,HentschelProcaccia1983}
+
+To separate the small perturbation parameter $\epsilon$ from the observation scale, we denote box size by $\delta$. Use the fixed affine coordinates
+\begin{equation}
+ u=\frac{\bar\theta+\pi}{2\pi},\qquad v=\frac{\omega}{4}.
+\label{eq:box_coordinates}
+\end{equation}
+This constant, nonsingular rescaling preserves an asymptotic dimension but affects finite-resolution fits. Squares in $(u,v)$ correspond to rectangles in the original coordinates. For a dyadic scale $\delta=2^{-j}$, set $m=2^j$ and define cell indices
+\begin{equation}
+i_u=\lfloor mu+a\rfloor\bmod m,\qquad
+i_v=\lfloor mv+b\rfloor,
+\label{eq:periodic_cells}
+\end{equation}
+where $\lfloor\cdot\rfloor$ is the floor function and $(a,b)$ gives the grid origin in fractions of a cell. The modulo operation also identifies angular cells across the cylinder seam. Counting distinct pairs gives $N_{\rm box}(\delta)$; the $16$ origins are the Cartesian product $a,b\in\{0,1/4,1/2,3/4\}$.
+
+For an attractor support $A$, the box-counting dimension, when the limit exists, is
+\begin{equation}
+ D_0=\lim_{\delta\to0}\frac{\ln N_{\rm box}(\delta)}{\ln(1/\delta)}.
+\label{eq:box_dimension}
+\end{equation}
+For a finite sample, sufficiently fine boxes eventually isolate individual points, and $N_{\rm box}$ saturates near the sample size. The literal dimension of this finite point cloud is zero. An estimate of the underlying attractor therefore comes from an intermediate interval fitted as
+\begin{equation}
+\ln N_{\rm box}(\delta)=\widehat D_0\ln(1/\delta)+C,
+\label{eq:box_linear}
+\end{equation}
+where $C$ is an intercept and $\widehat D_0$ is a finite-resolution slope, not an exact limiting dimension.\cite{Theiler1990}
+
+To distinguish support geometry from visitation probabilities, let $\mu$ be the invariant probability measure sampled by the attracting orbit and let $B_i(\delta)$ denote its occupied cells. Define $p_i(\delta)=\mu(B_i(\delta))$ and the partition entropy $S_\mu(\delta)=-\sum_i p_i(\delta)\ln p_i(\delta)$, with $0\ln0=0$. The information dimension, when this limit exists, is\cite{HentschelProcaccia1983}
+\begin{equation}
+D_1=\lim_{\delta\to0}\frac{S_\mu(\delta)}{\ln(1/\delta)}.
+\label{eq:information_dimension}
+\end{equation}
+For $N$ retained points, $n_i$ visits to cell $i$ give the empirical probability $\widehat p_i=n_i/N$ and entropy $\widehat S_N=-\sum_i\widehat p_i\ln\widehat p_i$. For a typical orbit of an ergodic invariant measure, these cell frequencies converge to $p_i$ at each fixed partition as $N\to\infty$. Thus the invariant-measure definition requires the infinite-record limit before the small-cell limit; taking $\delta\to0$ at fixed $N$ instead gives zero information dimension. The numerical estimate $\widehat D_1$ is the slope of $\widehat S_N$ against $\ln(1/\delta)$ over the declared intermediate interval, with a fitted intercept. It weights frequently visited cells differently from a support count. We do not estimate Hausdorff dimension or assume exact equality of distinct dimension definitions.
+
+For Fig.~\ref{fig:fractal}(c--f), the parameters return to $q=0.5$, $f=1.2$, $\Omega=2/3$. We retain $N=2^{21}=2097152$ stroboscopic points after $4000$ discarded periods, using $480$ steps per period and the same initial state $(0.2,0)$. The plot is thinned only for display; every retained point enters the counts. The full scale test uses $j=3,\ldots,14$. The five-scale window $j=6,\ldots,10$ is selected after inspecting intermediate-scale behavior, and all neighboring four-scale windows are included in the supplementary diagnostic. This is a declared, data-informed choice, rather than a blind selection rule.
+
+Figure~\ref{fig:fractal}(e) displays the full range of box counts across grid origins. Panel (f) uses the first $2^{14},2^{16},2^{18},2^{19},2^{20},2^{21}$ points to test sample-size dependence. In the five-scale window, the grid medians are
+\begin{equation}
+\widehat D_0\simeq1.291,\qquad\widehat D_1\simeq1.204,
+\label{eq:measured_dimensions}
+\end{equation}
+with origin-dependent ranges $1.281$--$1.295$ and $1.200$--$1.215$, respectively. The bands describe numerical sensitivity, not statistical confidence intervals. The nested trajectory samples are correlated, so ordinary regression errors would not account for all uncertainty.
+
+A separate run with $960$ steps per period retains $2^{19}$ points after $8000$ discarded periods. Its dimensions are compared with the first $2^{19}$ points of the main run, keeping sample size fixed when testing integration step. The median capacity slopes are approximately $1.286$ in both runs, and the median information slopes are approximately $1.201$. Neighboring windows remain more sensitive than this step comparison: overly coarse boxes follow the global envelope, whereas overly fine boxes are limited by rare visits and finite sampling. The present estimates therefore characterize a resolved intermediate range; increasing the sample and averaging over origins reduces, but does not mathematically eliminate, scale dependence.
+
+\subsection{Lyapunov spectrum, contraction, and Kaplan--Yorke dimension}
+
+A second estimate of attractor dimension comes from the Lyapunov spectrum. Because the pendulum is periodically driven, it is useful to convert the nonautonomous two-dimensional system into an autonomous three-dimensional flow by introducing the forcing phase $\phi$,
+\begin{align}
+ \dot\theta&=\omega,\label{eq:extended1}\\
+ \dot\omega&=-\sin\theta-q\omega+f\cos\phi,\label{eq:extended2}\\
+ \dot\phi&=\Omega.\label{eq:extended3}
+\end{align}
+The divergence of this extended vector field is particularly simple,
+\begin{equation}
+ \nabla\cdot\vect{F}=
+ \frac{\partial\dot\theta}{\partial\theta}
+ +\frac{\partial\dot\omega}{\partial\omega}
+ +\frac{\partial\dot\phi}{\partial\phi}
+ =-q.
+\label{eq:divergence}
+\end{equation}
+If $V(t)$ is an infinitesimal phase-space volume transported by the flow, Liouville's formula gives
+\begin{equation}
+ \frac{d}{dt}\ln V(t)=\nabla\cdot\vect{F}=-q,
+\label{eq:volume_contraction}
+\end{equation}
+so that
+\begin{equation}
+ V(t)=V(0)e^{-qt}.
+\label{eq:volume_solution}
+\end{equation}
+The long-time logarithmic rates of expansion and contraction are the Lyapunov exponents. Consequently, their sum satisfies
+\begin{equation}
+ \lambda_1+\lambda_2+\lambda_3=-q.
+\label{eq:sum_exponents}
+\end{equation}
+The extended variables are $(\theta,\omega,\phi)$, with $\phi$ defined modulo $2\pi$. A tangent perturbation along the autonomous flow produces one zero exponent; it is absent from the fixed-phase transverse calculation. On a bounded attractor this neutral direction has bounded nonvanishing speed because $\dot\phi=\Omega>0$. In a chaotic regime we therefore expect
+\begin{equation}
+ \lambda_1>0,\qquad \lambda_2=0,\qquad \lambda_3<0.
+\label{eq:spectrum_signs}
+\end{equation}
+For ordered exponents $\lambda_1\geq\lambda_2\geq\lambda_3$, the Kaplan--Yorke dimension is defined as\cite{KaplanYorke1979}
+\begin{equation}
+ D_{\rm KY}=j+
+ \frac{\sum_{i=1}^{j}\lambda_i}{|\lambda_{j+1}|},
+\label{eq:kaplanyorke}
+\end{equation}
+where $j$ is the largest integer for which the partial sum $\sum_{i=1}^{j}\lambda_i$ is nonnegative. For the spectrum in Eq.~(\ref{eq:spectrum_signs}), $j=2$, and therefore
+\begin{equation}
+ D_{\rm KY}^{\rm flow}=2+\frac{\lambda_1}{|\lambda_3|}.
+\label{eq:kaplanyorke_flow}
+\end{equation}
+A transverse Poincar\'e section removes the neutral direction. Write the two transverse exponents as $\lambda_+=\lambda_1$ and $\lambda_-=\lambda_3$. They satisfy $\lambda_++\lambda_-=-q$, so for $\lambda_+>0$ the Kaplan--Yorke construction gives
+\begin{equation}
+ D_{\rm KY}^{\rm sec}=1+\frac{\lambda_1}{q+\lambda_1}=D_{\rm KY}^{\rm flow}-1.
+\label{eq:kaplanyorke_section}
+\end{equation}
+Capacity dimension concerns the geometrical support, whereas the Kaplan--Yorke construction uses local stretching and contraction rates and is associated, under additional hypotheses, with information-like dimensions of the natural measure.\cite{FarmerOttYorke1983,Ott2002}
+
+The contraction identity also follows directly in the section. If $\Phi$ solves $\dot\Phi=J\Phi$, $\Phi(0)=I$, then
+\begin{equation}
+\frac{d}{dt}\det\Phi=\mathrm{tr}(J)\det\Phi=-q\det\Phi,
+\end{equation}
+and hence $\det D\mathcal P=e^{-qT_D}$. Taking long-time logarithmic rates gives $\lambda_++\lambda_-=-q$. Thus the negative transverse exponent used here is inferred from the exact identity as $\lambda_-=-q-\lambda_+$; it has not been independently measured by a full-spectrum QR algorithm. The sum is consequently a theoretical constraint, not an independent numerical validation of that inferred exponent.
+
+For the longer record used in the dimension calculation, $\lambda_+\simeq0.13174$, slightly different from the shorter average printed in Fig.~\ref{fig:poincare}(c). Its inferred extended-flow spectrum is
+\begin{equation}
+(\lambda_1,\lambda_2,\lambda_3)\simeq(0.13174,0,-0.63174).
+\end{equation}
+Consequently,
+\begin{equation}
+D_{\rm KY}^{\rm flow}\simeq2.209,\qquad
+D_{\rm KY}^{\rm sec}\simeq1.209.
+\end{equation}
+The independent $960$-step record gives $\lambda_+\simeq0.13164$ and the same section estimate at this precision. The information-dimension estimate lies near this value within the observed grid sensitivity, whereas the capacity estimate is larger. These dimensions describe different objects and are not constrained to agree. Figure~\ref{fig:fractal}(f) therefore compares them without tuning the spatial fit to the Lyapunov result.
+
+\onecolumngrid
+\begin{center}
+\centering
+\includegraphics[width=0.94\textwidth]{figures/fractal_dimension.png}
+\captionof{figure}{Manifold crossings and attractor geometry at $\Omega=2/3$ and driving phase zero. (a,b) Stable and unstable manifold portions of the periodic saddle for $q=0.05$, $f=0.12$; the rectangle selects the magnified region. Black circles mark the independently refined crossings; the diamond marks the saddle. (c,d) Attractor and selected filaments for the distinct pair $q=0.5$, $f=1.2$. (e) Box counts from $2^{21}$ points in the coordinates of Eq.~(\ref{eq:box_coordinates}); the envelope covers $16$ grid origins and the shaded window contains $j=6,\ldots,10$. (f) Median fitted capacity and information dimensions versus sample size, with full grid-origin ranges and the Kaplan--Yorke section estimate. Bands are sensitivity ranges, not confidence intervals. Numerical protocols and crossing checks are given in Secs.~\ref{subsec:crossings} and \ref{subsec:box_protocol}.}
+\label{fig:fractal}
+\end{center}
+\twocolumngrid
+
+\section{Discussion and conclusions}
+\label{sec:discussion}
+
+The driven damped pendulum links three distinct questions within one mechanical model. First, can weak perturbations generate transverse homoclinic intersections near a known separatrix? Second, does the orbit selected by a specified initial condition exhibit sustained exponential instability? Third, what geometry is resolved by its finite stroboscopic sample? Melnikov theory, the Lyapunov calculation, and box counting answer these questions at different levels of approximation.
+
+The analytical calculation identifies the balance between dissipative energy loss and phase-dependent work by the periodic torque. At $q=0.05$, $f=0.12$, two independently refined manifold intersections provide numerical evidence of the transverse geometry predicted in the perturbative analysis. Its simple-zero condition is controlled only in the weak-perturbation limit. A homoclinic horseshoe may be a nonattracting invariant set, so the condition cannot replace an investigation of the attracting orbit. In the finite-damping computations, the formal value $f_M\simeq1.019$ serves as context for the bifurcation scan, without defining a universal onset of chaos.
+
+For the prescribed initial state and forcing phase, the six sections distinguish periodic responses, filamentary chaos, and broader chaotic attractors at lower damping. Agreement of these geometrical and dynamical diagnostics, together with the integration-step comparison, supports the numerical classification. The scan also exposes periodic windows, but its finite parameter spacing and averaging time do not locate exact bifurcation values or characterize all basins of attraction.
+
+The dimension calculation requires similar care. Its noninteger fitted slopes describe an intermediate spatial range and show how finite sampling can conceal fine structure. Using more than two million samples, periodic angular indexing, and $16$ grid origins gives a capacity estimate near $1.29$ and an information estimate near $1.20$ over the declared spatial window. Residual scale sensitivity is reported rather than hidden in an apparently precise limiting dimension. The Kaplan--Yorke construction supplies an independent dynamical comparison, although its contracting exponent is inferred here from the exact contraction law. Neither numerical proximity nor a large regression coefficient establishes equality between geometrical and measure-based dimensions.
+
+The pedagogical result is therefore a reproducible sequence of calculations, with each conclusion tied to the assumptions of its diagnostic. Explicit separatrix and Melnikov derivations connect mechanics with invariant-manifold geometry; fixed-phase sampling and variational equations connect long-time motion with instability; and finite-resolution counting connects the observed filaments with quantitative geometry. Further work could extend the validated manifold portions, map coexisting basins, and test dimension convergence across broader spatial ranges.
+
+\section*{Supplementary material}
+The accompanying archive contains the manuscript source, vector figures, numerical diagnostics, the original calculation for Figs.~1, 2, and 4, and the updated Python program and independent Jupyter notebook for Figs.~3 and 5. Supplementary plots show the fixed-damping six-section comparison, all neighboring dimension-fit windows, and the matched-sample integration-step test. The large updated trajectory arrays are generated by the supplied code; no external experimental data are used.
+
+\section*{Data availability}
+The numerical diagnostics and reproducible calculations are included with this draft; the large updated trajectory arrays can be regenerated from the supplied parameters and programs. A permanent repository identifier should be added when these materials are deposited.
+
+\appendix
+\section{Evaluation of the separatrix Fourier integral}
+\label{app:transform}
+
+For completeness, the integral in Eq.~(\ref{eq:sechtransform}) can be evaluated without quoting a transform table. Set $z=e^t$, so $dt=dz/z$ and $\sech t=2z/(1+z^2)$. Then
+\begin{align}
+ I(\Omega)&=\int_{-\infty}^{\infty}\sech t\,e^{i\Omega t}dt\notag\\
+ &=2\int_0^\infty\frac{z^{i\Omega}}{1+z^2}\,dz\notag\\
+ &=\int_0^\infty\frac{y^{a-1}}{1+y}\,dy,
+ \qquad a=\frac{1+i\Omega}{2},
+\end{align}
+where $y=z^2$. For $0<\Re a<1$, the Euler beta integral and reflection identity give
+\begin{equation}
+ I(\Omega)=\Gamma(a)\Gamma(1-a)
+ =\frac{\pi}{\sin(\pi a)}
+ =\frac{\pi}{\cosh(\pi\Omega/2)}.
+\end{equation}
+Here $\Gamma$ is the Euler gamma function, and $\Re a$ denotes the real part of $a$. Taking the real part gives the cosine integral; the sine integral vanishes by odd parity. Together with $\int\sech^2t\,dt=\tanh t$, this completes the analytical evaluation of both Melnikov contributions.
+
+% Acknowledgments should be omitted for the initial anonymous AJP submission.
+% \begin{acknowledgments}
+% ...
+% \end{acknowledgments}
+
+\begin{thebibliography}{99}
+
+\bibitem{DeJong1992}
+M. L. De Jong, ``Chaos and the simple pendulum,'' Phys. Teach. \textbf{30}, 115--121 (1992), doi:10.1119/1.2343491.
+
+\bibitem{BakerGollub1996}
+G. L. Baker and J. P. Gollub, \textit{Chaotic Dynamics: An Introduction}, 2nd ed. (Cambridge University Press, Cambridge, 1996).
+
+\bibitem{Strogatz2015}
+S. H. Strogatz, \textit{Nonlinear Dynamics and Chaos}, 2nd ed. (Westview Press, Boulder, 2015).
+
+\bibitem{Buyse2017}
+F. Buyse, ``Introduction. Galileo, Huygens and the pendulum clock: Isochronism and synchronicity,'' Society and Politics \textbf{11}(2), 7--14 (2017).
+
+\bibitem{Huygens1673}
+C. Huygens, \textit{Horologium Oscillatorium: Sive de Motu Pendulorum ad Horologia Aptato Demonstrationes Geometricae} (F. Muguet, Paris, 1673).
+
+\bibitem{Bistafa2021}
+S. R. Bistafa, ``A translation of L. Euler\textquotesingle s `On a new class of oscillations\textquotesingle,'' arXiv:2105.03319 (2021).
+
+\bibitem{Bistafa2022}
+S. R. Bistafa, ``On a new class of oscillations,'' Euleriana \textbf{2}(1), 11--26 (2022), doi:10.56031/2693-9908.1031.
+
+\bibitem{Young1813}
+T. Young, ``A theory of tides, including the consideration of resistance,'' Nicholson\textquotesingle s Journal \textbf{35}, 145 (1813).
+
+\bibitem{Young1824}
+T. Young, \textit{Tides: From the Supplement to the Encyclopaedia Britannica} (J. Murray, 1824).
+
+\bibitem{Poincare1890}
+H. Poincar\'e, ``Sur le probl\`eme des trois corps et les \`equations de la dynamique,'' Acta Math. \textbf{13}, 1--270 (1890).
+
+\bibitem{BarrowGreen1997}
+J. Barrow-Green, \textit{Poincar\'e and the Three Body Problem} (American Mathematical Society, Providence, 1997).
+
+\bibitem{VanderPol1927}
+B. van der Pol, ``Forced oscillations in a circuit with nonlinear resistance,'' Philos. Mag. \textbf{3}, 65--80 (1927).
+
+\bibitem{CartwrightLittlewood1945}
+M. L. Cartwright and J. E. Littlewood, ``On non-linear differential equations of the second order: I,'' J. London Math. Soc. \textbf{20}, 180--189 (1945), doi:10.1112/jlms/s1-20.3.180.
+
+\bibitem{Lorenz1963}
+E. N. Lorenz, ``Deterministic nonperiodic flow,'' J. Atmos. Sci. \textbf{20}, 130--141 (1963).
+
+\bibitem{Peixoto1959}
+M. M. Peixoto, ``On structural stability,'' Ann. Math. \textbf{69}, 199--222 (1959).
+
+\bibitem{Peixoto1962}
+M. M. Peixoto, ``Structural stability on two-dimensional manifolds,'' Topology \textbf{1}, 101--120 (1962).
+
+\bibitem{Smale1960}
+S. Smale, ``On dynamical systems,'' Bol. Soc. Mat. Mexicana \textbf{5}, 195--198 (1960).
+
+\bibitem{Smale1967}
+S. Smale, ``Differentiable dynamical systems,'' Bull. Am. Math. Soc. \textbf{73}, 747--817 (1967).
+
+\bibitem{Melnikov1963}
+V. K. Mel'nikov, ``On the stability of a center for time-periodic perturbations,'' Tr. Mosk. Mat. Obs. \textbf{12}, 3--52 (1963).
+
+\bibitem{Wiggins2003}
+S. Wiggins, \textit{Introduction to Applied Nonlinear Dynamical Systems and Chaos}, 2nd ed. (Springer, New York, 2003).
+
+\bibitem{KaplanYorke1979}
+J. L. Kaplan and J. A. Yorke, ``Chaotic behavior of multidimensional difference equations,'' in \textit{Functional Differential Equations and Approximation of Fixed Points}, edited by H.-O. Peitgen and H.-O. Walther (Springer, Berlin, 1979), pp. 204--227.
+
+\bibitem{Ott2002}
+E. Ott, \textit{Chaos in Dynamical Systems}, 2nd ed. (Cambridge University Press, Cambridge, 2002).
+
+\bibitem{Benettin1980}
+G. Benettin, L. Galgani, A. Giorgilli, and J.-M. Strelcyn, ``Lyapunov characteristic exponents for smooth dynamical systems and for Hamiltonian systems; a method for computing all of them,'' Meccanica \textbf{15}, 9--20 (1980).
+
+\bibitem{FarmerOttYorke1983}
+J. D. Farmer, E. Ott, and J. A. Yorke, ``The dimension of chaotic attractors,'' Physica D \textbf{7}, 153--180 (1983).
+
+\bibitem{Matthews2000}
+M. R. Matthews, \textit{Time for Science Education: How Teaching the History and Philosophy of Pendulum Motion Can Contribute to Science Literacy} (Kluwer Academic, Dordrecht, 2000).
+
+\bibitem{Bleck2018}
+J. Bleck-Neuhaus, ``Mechanical resonance: 300 years from discovery to the full understanding of its importance,'' arXiv:1811.08353 (2018).
+
+\bibitem{Falconer2014}
+K. Falconer, \textit{Fractal Geometry: Mathematical Foundations and Applications}, 3rd ed. (John Wiley \& Sons, Chichester, 2014).
+
+\bibitem{HentschelProcaccia1983}
+H. G. E. Hentschel and I. Procaccia, ``The infinite number of generalized dimensions of fractals and strange attractors,'' Physica D \textbf{8}, 435--444 (1983), doi:10.1016/0167-2789(83)90235-X.
+
+\bibitem{Theiler1990}
+J. Theiler, ``Estimating fractal dimension,'' J. Opt. Soc. Am. A \textbf{7}, 1055--1073 (1990), doi:10.1364/JOSAA.7.001055.
+\end{thebibliography}
+
+\end{document}
